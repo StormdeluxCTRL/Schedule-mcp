@@ -3,6 +3,8 @@ import { z } from "zod"
 import { supabase } from "@/lib/supabase"
 
 const handler = createMcpHandler((server) => {
+
+  // 1. Tool za urnik
   server.registerTool(
     "get_schedule",
     {
@@ -40,6 +42,44 @@ const handler = createMcpHandler((server) => {
       }
     }
   )
+
+  // 2. Tool za potne naloge
+  server.registerTool(
+    "get_travel_orders",
+    {
+      description: "Vrne potne naloge za določeno osebo.",
+      inputSchema: {
+        oseba: z.string(),
+      },
+    },
+    async ({ oseba }) => {
+      const { data, error } = await supabase
+        .from("potni_nalogi")
+        .select("*")
+        .eq("oseba", oseba)
+
+      if (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Napaka pri branju potnih nalogov: ${error.message}`,
+            },
+          ],
+        }
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(data),
+          },
+        ],
+      }
+    }
+  )
+
 })
 
 export { handler as GET, handler as POST }
